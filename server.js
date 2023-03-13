@@ -8,31 +8,37 @@ const path = require('path');
 
 // Utilizing MiddleWares
 const app = express();
+app.use(cors());
 app.use(upload()); // Documents importing package!
 app.use(bodyParser.json());
-app.use(cors());
 
 // API endpoint to get folder names
-app.get('/folders', (req, res) => {
+app.post('/folders', (req, res) => {
   const fs = require('fs');
   const folderPath = path.join(__dirname, req.body.folder);
-  
-  // Read the folder names in the content directory
-  fs.readdir(folderPath, (err, files) => {
-    if (err) {
-      console.error(err);
-      return res.status(200).json({
-        success: false,
-        message: "Error reading files"
-      })
-    }
+  try{
+    // Read the folder names in the content directory
+    fs.readdir(folderPath, (err, files) => {
+      if (err) {
+        console.error(err);
+        return res.status(200).json({
+          success: false,
+          message: "Error reading files"
+        })
+      }
 
-    // Send the folder names as a JSON response
-    res.status(200).json({
-      success: true,
-      message: files
-    })
-  });
+      // Send the folder names as a JSON response
+      res.status(200).json({
+        success: true,
+        message: files
+      })
+    });
+  } catch(err){
+      res.status(422).json({
+        success: false,
+        message: "Error when reading the content!"
+      })
+  }
 });
 
 // Handling Upload Request - Temp!
