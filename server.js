@@ -12,6 +12,13 @@ app.use(cors());
 app.use(upload()); // Documents importing package!
 app.use(bodyParser.json());
 
+// CORS issue with NGROK~
+app.use(function(req, res, next) {
+res.header("Access-Control-Allow-Origin", "*"); // update to match 
+res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+next();
+});
+
 // API endpoint to get folder names
 app.post('/folders', (req, res) => {
   const fs = require('fs');
