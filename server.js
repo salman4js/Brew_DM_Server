@@ -55,11 +55,11 @@ app.post("/upload", function(req,res){
     
     // Uploaded path
     const uploadedFile = req.files.uploadFile;
-  
+      
     // Upload path
     const uploadPath = __dirname
-        + "/content/" + uploadedFile.name;
-  
+        + "/content/" + req.body.pathName + uploadedFile.name;
+          
     // To save the file using mv() function
     uploadedFile.mv(uploadPath, function (err) {
       if (err) {
@@ -70,6 +70,8 @@ app.post("/upload", function(req,res){
   } else res.send("No file uploaded !!");
 })
 
+
+// Test Route to check the server connection // TODO : Delete Later!
 app.get("/cabinets", function(req,res,next){
   res.status(200).json({
     success: true,
