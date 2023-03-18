@@ -2,6 +2,7 @@ const express = require("express");
 const upload = require("express-fileupload");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const fs = require("fs");
 
 // Importing path module!
 const path = require('path');
@@ -47,6 +48,32 @@ app.post('/folders', (req, res) => {
       })
   }
 });
+
+// Create folder in the destination!
+app.post("/createfolder", function(req,res){
+    const folderName = req.body.pathName;
+    
+    // Performing folder creation!
+    try {
+      if (!fs.existsSync(folderName)) {
+        fs.mkdirSync(folderName);
+        res.status(200).json({
+          success: true,
+          message: `Folder Created Successfully!`
+        })
+      } else {
+        res.status(200).json({
+          success: true,
+          message: "Folder Already Exists!"
+        })
+      }
+    } catch (err) {
+      res.status(409).json({
+        success: false,
+        message: "Some Internal error occured!"
+      })
+    }
+})
 
 // Handling Upload Request - Temp!
 app.post("/upload", function(req,res){
