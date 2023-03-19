@@ -102,6 +102,13 @@ app.post("/upload", function(req,res){
   } else res.send("No file uploaded !!");
 })
 
+// Handling Download Request from the client 
+app.post("/download", function(req,res,next){
+  const filePath = req.body.filePath;
+  // Send the file to the client!
+  res.download(filePath);
+})
+
 
 // Test Route to check the server connection // TODO : Delete Later!
 app.get("/cabinets", function(req,res,next){
