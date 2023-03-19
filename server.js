@@ -3,6 +3,7 @@ const upload = require("express-fileupload");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const fs = require("fs");
+const pathModule = require("path");
 
 // Importing path module!
 const path = require('path');
@@ -22,37 +23,41 @@ next();
 
 // API endpoint to get folder names
 app.post('/folders', (req, res) => {
-  const fs = require('fs');
   const folderPath = path.join(__dirname, req.body.folder);
   try{
-    // Read the folder names in the content directory
-    fs.readdir(folderPath, (err, files) => {
-      if (err) {
-        console.error(err);
-        return res.status(200).json({
-          success: false,
-          message: "Error reading files"
-        })
-      }
-
-      // Send the folder names as a JSON response
-      res.status(200).json({
-        success: true,
-        message: files
+    const data = fs.readdirSync(req.body.folder)
+      .map(file => {
+        const status = fs.statSync(pathModule.join(req.body.folder, file))
+        return{
+          name: file,
+          directory: status.isDirectory()
+        }
       })
-    });
+      .sort((a, b) => {
+        if (a.directory === b.directory) {
+          return a.name.localeCompare(b.name)
+        }
+        return a.directory ? -1 : 1
+      })
+      
+    // Everything goes well...
+    res.status(200).json({
+      success: true,
+      message: data
+    })
+    
   } catch(err){
       res.status(422).json({
         success: false,
         message: "Error when reading the content!"
       })
-  }
+    }
 });
 
 // Create folder in the destination!
 app.post("/createfolder", function(req,res){
+  console.log(req.body.pathName);
     const folderName = req.body.pathName;
-    
     // Performing folder creation!
     try {
       if (!fs.existsSync(folderName)) {
