@@ -91,14 +91,22 @@ app.post("/upload", function(req,res){
     // Upload path
     const uploadPath = __dirname
         + "/content/" + req.body.pathName + uploadedFile.name;
-          
-    // To save the file using mv() function
-    uploadedFile.mv(uploadPath, function (err) {
-      if (err) {
-        console.log(err);
-        res.send("Failed !!");
-      } else res.send("Successfully Uploaded !!");
-    });
+        
+    // Only upload if the file doesn't already exists!
+    if(!fs.existsSync(uploadPath)){
+      // To save the file using mv() function
+      uploadedFile.mv(uploadPath, function (err) {
+        if (err) {
+          console.log(err);
+          res.send("Failed !!");
+        } else res.send("Successfully Uploaded !!");
+      });
+    } else {
+      res.status(409).json({
+        success: false,
+        message: "Content already exisits!"
+      })
+    }
   } else res.send("No file uploaded !!");
 })
 
