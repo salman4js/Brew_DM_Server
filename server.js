@@ -56,7 +56,6 @@ app.post('/folders', (req, res) => {
 
 // Create folder in the destination!
 app.post("/createfolder", function(req,res){
-  console.log(req.body.pathName);
     const folderName = req.body.pathName;
     // Performing folder creation!
     try {
@@ -98,13 +97,20 @@ app.post("/upload", function(req,res){
       uploadedFile.mv(uploadPath, function (err) {
         if (err) {
           console.log(err);
-          res.send("Failed !!");
-        } else res.send("Successfully Uploaded !!");
+          res.status(409).json({
+            success: false,
+            message: "Failed uploading file!"
+          })
+        } else res.status(200).json({
+          success: true,
+          message: "File has been uploaded"
+        });
       });
     } else {
-      res.status(409).json({
-        success: false,
-        message: "Content already exisits!"
+      res.status(201).json({
+        success: true,
+        message: "Content already exisits",
+        bodyText: "Do you want to add version to this file?"
       })
     }
   } else res.send("No file uploaded !!");
