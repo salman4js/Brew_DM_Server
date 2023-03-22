@@ -21,16 +21,22 @@ res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Ty
 next();
 });
 
+// Regex String!
+var regexExp = /--version[0-9]/;
+
 // API endpoint to get folder names
 app.post('/folders', (req, res) => {
   const folderPath = path.join(__dirname, req.body.folder);
   try{
     const data = fs.readdirSync(req.body.folder)
       .map(file => {
-        const status = fs.statSync(pathModule.join(req.body.folder, file))
+        const status = fs.statSync(pathModule.join(req.body.folder, file));
+        const versionStr = file.slice(-10);
+        const isMatch = checkRegex(versionStr, regexExp);
         return{
           name: file,
-          directory: status.isDirectory()
+          directory: status.isDirectory(),
+          addVersion: isMatch
         }
       })
       .sort((a, b) => {
@@ -79,42 +85,97 @@ app.post("/createfolder", function(req,res){
     }
 })
 
-// Handling Upload Request - Temp!
+// Handling Upload Request!
 app.post("/upload", function(req,res){
   // When a file has been uploaded
   if (req.files && Object.keys(req.files).length !== 0) {
     
-    // Uploaded path
-    const uploadedFile = req.files.uploadFile;
+    // File Properties
+    let uploadedFile = req.files.uploadFile;
       
-    // Upload path
-    const uploadPath = __dirname
+    // Upload path for normal upload
+    let uploadPath = __dirname
         + "/content/" + req.body.pathName + uploadedFile.name;
         
-    // Only upload if the file doesn't already exists!
-    if(!fs.existsSync(uploadPath)){
-      // To save the file using mv() function
-      uploadedFile.mv(uploadPath, function (err) {
-        if (err) {
-          console.log(err);
+    // Only upload if the file doesn't already exists and add version is not enabled yet.
+      if(!fs.existsSync(uploadPath)){
+        // Trigger the helper function!
+        const resp = uploadFileContent(uploadedFile, uploadPath);
+        if(resp){
+          res.status(200).json({
+            success: true,
+            message: "File Uploaded"
+          })
+        } else {
           res.status(409).json({
             success: false,
-            message: "Failed uploading file!"
+            message: "Failed to upload the file!"
           })
-        } else res.status(200).json({
+        }
+      } else {
+        res.status(201).json({
           success: true,
-          message: "File has been uploaded"
-        });
-      });
-    } else {
-      res.status(201).json({
-        success: true,
-        message: "Content already exisits",
-        bodyText: "Do you want to add version to this file?"
-      })
-    }
+          message: "Content already exisits",
+          bodyText: "Do you want to add version to this file?"
+        })
+      }
   } else res.send("No file uploaded !!");
 })
+
+// Perform Add Version!
+app.post("/addversion-fileupload", function(req,res,next){
+  
+  // File Properties
+  let uploadedFile = req.files.uploadFile;
+  
+  // Check how many times the files has been added to the add version in the folderPath!
+  const occurences = fs.readdirSync("content/" + req.body.pathName.slice(0, -1));
+
+  var count = 0; 
+  for (number of occurences){
+    if(checkRegex(number, regexExp )){
+      count ++;
+    }
+  }
+  
+  // Form the upload path!
+  const uploadPath = __dirname + "/content/" + req.body.pathName + uploadedFile.name;
+  const renamePath =  __dirname + "/content/" + req.body.pathName + uploadedFile.name + `--version${count}`;
+  
+  // Rename the new file as the latest and add the old version into the log place!
+  fs.rename(uploadPath, renamePath, function(err){
+    if(err){
+      console.error("Error in rename", err);
+    } 
+    
+    // Continue with the add version functionality!
+    const result = uploadFileContent(uploadedFile, uploadPath);
+    if(result){
+      res.status(200).json({
+        success: true,
+        message: "File uploaded in add version Successfully!"
+      })
+    } else {
+      res.status(409).json({
+        success: false,
+        message: "Failed to do add version!"
+      })
+    }
+  }) 
+})
+
+// Helper function for uploading the file into the server!
+function uploadFileContent(uploadedFile, uploadPath){
+  // To save the file using mv() function
+  var result = true;
+  uploadedFile.mv(uploadPath, function (err) {
+    if(err){
+      result = false;
+    } 
+  });
+  
+  return result;
+}
 
 // Handling Download Request from the client 
 app.post("/download", function(req,res,next){
@@ -122,6 +183,11 @@ app.post("/download", function(req,res,next){
   // Send the file to the client!
   res.download(filePath);
 })
+
+// Check regexExp
+function checkRegex(string, regexExp){
+  return regexExp.test(string);
+}
 
 
 // Test Route to check the server connection // TODO : Delete Later!
