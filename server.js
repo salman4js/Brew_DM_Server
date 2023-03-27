@@ -60,6 +60,52 @@ app.post('/folders', (req, res) => {
     }
 });
 
+
+// Endpoint to get all the versions for the requested document
+app.post("/addversion-files", function(req,res,next){
+  try{
+    const data = fs.readdirSync(req.body.folder)
+      .map(file => {
+        const status = fs.statSync(pathModule.join(req.body.folder, file));
+        const fileName = file.match(/^([^-]*)/)[1]; // Extracting the filename and 
+        // Version number from the document!
+        const version = file.replace(fileName + "--" + "");
+        return{
+          name: checkFileName(fileName, req.body.fileName), // Helper Function to verify the fileName from the client!
+          directory: status.isDirectory(),
+          version: version.split("undefined")[1] // Getting the version return undefined followed by version number.
+          // Ignoring the 'undefined' by using split!
+        }
+      })
+      .sort((a, b) => {
+        if (a.directory === b.directory) {
+          return a.name.localeCompare(b.name)
+        }
+        return a.directory ? -1 : 1
+      })
+      
+    // Everything goes well...
+    res.status(200).json({
+      success: true,
+      message: data
+    })
+    
+  } catch(err){
+      res.status(422).json({
+        success: false,
+        message: "Error when reading the content!"
+      })
+    }
+})
+
+// File Name helper function for add version!
+function checkFileName(fileName, clientName){
+  if(clientName.includes(fileName)){
+    return fileName;
+  }
+}
+
+
 // Create folder in the destination!
 app.post("/createfolder", function(req,res){
     const folderName = req.body.pathName;
@@ -84,6 +130,7 @@ app.post("/createfolder", function(req,res){
       })
     }
 })
+
 
 // Handling Upload Request!
 app.post("/upload", function(req,res){
@@ -121,6 +168,7 @@ app.post("/upload", function(req,res){
       }
   } else res.send("No file uploaded !!");
 })
+
 
 // Perform Add Version!
 app.post("/addversion-fileupload", function(req,res,next){
@@ -164,6 +212,7 @@ app.post("/addversion-fileupload", function(req,res,next){
   }) 
 })
 
+
 // Helper function for uploading the file into the server!
 function uploadFileContent(uploadedFile, uploadPath){
   // To save the file using mv() function
@@ -176,6 +225,7 @@ function uploadFileContent(uploadedFile, uploadPath){
   
   return result;
 }
+
 
 // Handling Download Request from the client 
 app.post("/download", function(req,res,next){
@@ -197,6 +247,8 @@ app.get("/cabinets", function(req,res,next){
     message: "Hey there, boss"
   })
 })
+
+
 
 // Running the server!
 app.listen(3200, () => {
