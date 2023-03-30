@@ -77,12 +77,6 @@ app.post("/addversion-files", function(req,res,next){
           // Ignoring the 'undefined' by using split!
         }
       })
-      .sort((a, b) => {
-        if (a.directory === b.directory) {
-          return a.name.localeCompare(b.name)
-        }
-        return a.directory ? -1 : 1
-      })
       
     // Everything goes well...
     res.status(200).json({
