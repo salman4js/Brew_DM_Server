@@ -5,6 +5,9 @@ const cors = require("cors");
 const fs = require("fs");
 const pathModule = require("path");
 
+// Importing properties file!
+const properties = require("./properties/properties.json");
+
 // Importing path module!
 const path = require('path');
 
@@ -33,10 +36,12 @@ app.post('/folders', (req, res) => {
         const status = fs.statSync(pathModule.join(req.body.folder, file));
         const versionStr = file.slice(-10);
         const isMatch = checkRegex(versionStr, regexExp);
+        const modified = checkModified(folderPath, file);
         return{
           name: file,
           directory: status.isDirectory(),
-          addVersion: isMatch
+          addVersion: isMatch,
+          modified: modified
         }
       })
       .sort((a, b) => {
@@ -59,6 +64,22 @@ app.post('/folders', (req, res) => {
       })
     }
 });
+
+// Check regexExp
+function checkRegex(string, regexExp){
+  return regexExp.test(string);
+}
+
+// Check Modified!
+function checkModified(path, file){
+  let modifiedBy = path + "/" + file;
+  const props = properties[modifiedBy];
+  if(props !== undefined){
+    return props;
+  } else {
+    return "Not Provided"
+  }
+}
 
 
 // Endpoint to get all the versions for the requested document
@@ -138,6 +159,8 @@ app.post("/upload", function(req,res){
     let uploadPath = __dirname
         + "/content/" + req.body.pathName + uploadedFile.name;
         
+    addProperties(uploadPath, req.body.username); // Adding properties to the properties.json file!
+    
     // Only upload if the file doesn't already exists and add version is not enabled yet.
       if(!fs.existsSync(uploadPath)){
         // Trigger the helper function!
@@ -160,8 +183,29 @@ app.post("/upload", function(req,res){
           bodyText: "Do you want to add version to this file?"
         })
       }
-  } else res.send("No file uploaded !!");
+    } else res.send("No file uploaded !!");
 })
+
+
+// Add Properties helper function!
+function addProperties(path, username){
+  fs.readFile('./properties/properties.json', 'utf8', (err, data) => {
+    if(err){
+      return false
+    }
+    const propertyData = JSON.parse(data)
+    
+    // Add New Property Now!
+    propertyData[`${path}`] = username;
+    
+    fs.writeFile('./properties/properties.json', JSON.stringify(propertyData), err => {
+      if(err){
+        return false;
+      }
+      return; 
+    })
+  })
+}
 
 
 // Perform Add Version!
@@ -206,7 +250,6 @@ app.post("/addversion-fileupload", function(req,res,next){
   }) 
 })
 
-
 // Helper function for uploading the file into the server!
 function uploadFileContent(uploadedFile, uploadPath){
   // To save the file using mv() function
@@ -220,19 +263,12 @@ function uploadFileContent(uploadedFile, uploadPath){
   return result;
 }
 
-
 // Handling Download Request from the client 
 app.post("/download", function(req,res,next){
   const filePath = req.body.filePath;
   // Send the file to the client!
   res.download(filePath);
 })
-
-// Check regexExp
-function checkRegex(string, regexExp){
-  return regexExp.test(string);
-}
-
 
 // Test Route to check the server connection // TODO : Delete Later!
 app.get("/cabinets", function(req,res,next){
@@ -241,7 +277,6 @@ app.get("/cabinets", function(req,res,next){
     message: "Hey there, boss"
   })
 })
-
 
 
 // Running the server!
