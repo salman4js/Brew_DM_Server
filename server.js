@@ -24,7 +24,7 @@ res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Ty
 next();
 });
 
-// Regex String!
+// Regex String for add version
 var regexExp = /--version[0-9]/;
 
 // API endpoint to get folder names
