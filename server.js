@@ -84,6 +84,7 @@ function checkModified(path, file){
 
 // Endpoint to get all the versions for the requested document
 app.post("/addversion-files", function(req,res,next){
+  const folderPath = path.join(__dirname, req.body.folder);
   try{
     const data = fs.readdirSync(req.body.folder)
       .map(file => {
@@ -91,11 +92,13 @@ app.post("/addversion-files", function(req,res,next){
         const fileName = file.match(/^([^-]*)/)[1]; // Extracting the filename and 
         // Version number from the document!
         const version = file.replace(fileName + "--" + "");
+        const modified = checkModified(folderPath, req.body.fileName);
         return{
           name: checkFileName(fileName, req.body.fileName), // Helper Function to verify the fileName from the client!
           directory: status.isDirectory(),
-          version: version.split("undefined")[1] // Getting the version return undefined followed by version number.
+          version: version.split("undefined")[1], // Getting the version return undefined followed by version number.
           // Ignoring the 'undefined' by using split!
+          modified: modified
         }
       })
       
