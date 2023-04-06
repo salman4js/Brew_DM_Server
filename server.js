@@ -92,13 +92,12 @@ app.post("/addversion-files", function(req,res,next){
         const fileName = file.match(/^([^-]*)/)[1]; // Extracting the filename and 
         // Version number from the document!
         const version = file.replace(fileName + "--" + "");
-        const modified = checkModified(folderPath, req.body.fileName);
         return{
           name: checkFileName(fileName, req.body.fileName), // Helper Function to verify the fileName from the client!
           directory: status.isDirectory(),
           version: version.split("undefined")[1], // Getting the version return undefined followed by version number.
           // Ignoring the 'undefined' by using split!
-          modified: modified
+          modified: checkModified(folderPath, file)
         }
       })
       
@@ -189,15 +188,16 @@ app.post("/upload", function(req,res){
     } else res.send("No file uploaded !!");
 })
 
-
 // Add Properties helper function!
 function addProperties(path, username){
-  fs.readFile('./properties/properties.json', 'utf8', (err, data) => {
-    if(err){
-      return false
-    }
-    const propertyData = JSON.parse(data)
+  
+    fs.readFile('./properties/properties.json', 'utf8', (err, data) => {
+      if(err){
+        return false
+      }
     
+    const propertyData = JSON.parse(data)
+        
     // Add New Property Now!
     propertyData[`${path}`] = username;
     
@@ -208,6 +208,11 @@ function addProperties(path, username){
       return; 
     })
   })
+}
+
+// Add Version get modifiedBy helper function!
+function getModifiedByVersion(filePath){
+  return properties[filePath];
 }
 
 
@@ -231,11 +236,15 @@ app.post("/addversion-fileupload", function(req,res,next){
   const uploadPath = __dirname + "/content/" + req.body.pathName + uploadedFile.name;
   const renamePath =  __dirname + "/content/" + req.body.pathName + uploadedFile.name + `--version${count}`;
   
-  // Rename the new file as the latest and add the old version into the log place!
+  const modifiedUser = getModifiedByVersion(uploadPath);  
+  
   fs.rename(uploadPath, renamePath, function(err){
     if(err){
       console.error("Error in rename", err);
     } 
+    
+    // Add renamed value with the modified Username to the properties.json
+    addProperties(uploadPath, modifiedUser);
     
     // Continue with the add version functionality!
     const result = uploadFileContent(uploadedFile, uploadPath);
