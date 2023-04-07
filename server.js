@@ -282,6 +282,16 @@ app.post("/download", function(req,res,next){
   res.download(filePath);
 })
 
+// Delete files handler!
+app.post("/deletefile", function(req,res,next){
+  const filePath = req.body.filePath;
+  fs.unlinkSync(filePath); // Delete the file in the provided path!
+  res.status(200).json({
+    success: true,
+    message: "File deleted successfully!"
+  })
+})
+
 // Test Route to check the server connection // TODO : Delete Later!
 app.get("/cabinets", function(req,res,next){
   res.status(200).json({
