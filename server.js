@@ -224,11 +224,13 @@ app.post("/addversion-fileupload", function(req,res,next){
   
   // Check how many times the files has been added to the add version in the folderPath!
   const occurences = fs.readdirSync("content/" + req.body.pathName.slice(0, -1));
-
+  
   var count = 0; 
   for (number of occurences){
-    if(checkRegex(number, regexExp )){
-      count ++;
+    if(number.includes(uploadedFile.name)){
+      if(checkRegex(number, regexExp)){
+        count ++;
+      }
     }
   }
   
@@ -242,9 +244,9 @@ app.post("/addversion-fileupload", function(req,res,next){
     if(err){
       console.error("Error in rename", err);
     } 
-    
+        
     // Add renamed value with the modified Username to the properties.json
-    addProperties(uploadPath, modifiedUser);
+    addProperties(renamePath, modifiedUser);
     
     // Continue with the add version functionality!
     const result = uploadFileContent(uploadedFile, uploadPath);
