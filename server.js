@@ -161,53 +161,52 @@ app.post("/upload", function(req,res){
     let uploadPath = __dirname
         + "/content/" + req.body.pathName + uploadedFile.name;
         
-    addProperties(uploadPath, req.body.username); // Adding properties to the properties.json file!
-    
-    // Only upload if the file doesn't already exists and add version is not enabled yet.
-      if(!fs.existsSync(uploadPath)){
-        // Trigger the helper function!
-        const resp = uploadFileContent(uploadedFile, uploadPath);
-        if(resp){
-          res.status(200).json({
-            success: true,
-            message: "File Uploaded"
-          })
+    const value = addProperties(uploadPath, req.body.username); // Adding properties to the properties.json file!
+    if(value){
+      // Only upload if the file doesn't already exists and add version is not enabled yet.
+        if(!fs.existsSync(uploadPath)){
+          // Trigger the helper function!
+          const resp = uploadFileContent(uploadedFile, uploadPath);
+          if(resp){
+            res.status(200).json({
+              success: true,
+              message: "File Uploaded"
+            })
+          } else {
+            res.status(409).json({
+              success: false,
+              message: "Failed to upload the file!"
+            })
+          }
         } else {
-          res.status(409).json({
-            success: false,
-            message: "Failed to upload the file!"
+          res.status(201).json({
+            success: true,
+            message: "Content already exisits",
+            bodyText: "Do you want to add version to this file?"
           })
         }
-      } else {
-        res.status(201).json({
-          success: true,
-          message: "Content already exisits",
-          bodyText: "Do you want to add version to this file?"
-        })
-      }
-    } else res.send("No file uploaded !!");
+      } else res.send("No file uploaded !!");
+    }
 })
 
 // Add Properties helper function!
 function addProperties(path, username){
   
-    fs.readFile('./properties/properties.json', 'utf8', (err, data) => {
-      if(err){
-        return false
-      }
-    
+    const data = fs.readFileSync('./properties/properties.json', 'utf-8');
     const propertyData = JSON.parse(data)
-        
+    
     // Add New Property Now!
     propertyData[`${path}`] = username;
-    
-    fs.writeFile('./properties/properties.json', JSON.stringify(propertyData), err => {
-      if(err){
-        return false;
-      }
-      return; 
+      
+    return new Promise((resolve, reject) => {
+      fs.writeFile('./properties/properties.json', JSON.stringify(propertyData), function(err) {
+        if(err){
+          reject(err);
+        } else {
+          resolve();
+        } 
+      })
     })
-  })
 }
 
 // Add Version get modifiedBy helper function!
