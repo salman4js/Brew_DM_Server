@@ -214,15 +214,12 @@ function addProperties(path, username){
     // Add New Property Now!
     propertyData[`${path}`] = username;
       
-    return new Promise((resolve, reject) => {
-      fs.writeFile('./properties/properties.json', JSON.stringify(propertyData), function(err) {
-        if(err){
-          reject(err);
-        } else {
-          resolve();
-        } 
-      })
+    fs.writeFile('./properties/properties.json', JSON.stringify(propertyData), err => {
+      if(err){
+        return false;
+      } 
     })
+    return true;
 }
 
 // Add Version get modifiedBy helper function!
