@@ -189,6 +189,22 @@ app.post("/upload", function(req,res){
     }
 })
 
+// Get file data for the code editor!
+app.post("/getfiledata", function(req,res,next){
+  try{
+    const data = fs.readFileSync(req.body.filePath, 'utf-8');
+    res.status(200).json({
+      success: true,
+      message: data
+    })
+  } catch(err){
+    res.status(401).json({
+      success: false,
+      message: "Some internal error occured!"
+    })
+  }
+})
+
 // Add Properties helper function!
 function addProperties(path, username){
   
